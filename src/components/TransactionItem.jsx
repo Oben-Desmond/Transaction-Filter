@@ -1,7 +1,8 @@
 import React from 'react'
 import { getDaysAgo, getTimeAgo } from './utilities';
 
-const TransactionItem = ({transaction}) => {
+const TransactionItem = ({transactions,index}) => {
+    const transaction=transactions[index]
     const trans_x1 = transaction;
     let equal = false;
     if (index > 0) {

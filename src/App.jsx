@@ -4,6 +4,7 @@ import './App.css';
 // graphqlclient, gql
 import { GraphQLClient, gql } from 'graphql-request';
 import TransactionItem from './components/TransactionItem';
+import { convertDays } from './components/utilities';
 
 const graphcms = new GraphQLClient('https://api-us-west-2.graphcms.com/v2/cl5cv0ond0eo601tbcnyw43ip/master');
 
@@ -189,7 +190,7 @@ function App() {
         {transactions.map((transaction, index) => {
 
              return(
-              <TransactionItem transaction={transaction} key={index} />
+              <TransactionItem transactions={transactions} index={index} key={index} />
              )
         }
         )}
@@ -205,7 +206,7 @@ function App() {
 export default App;
 
 
-const dateOptions = [6, 14, 21, 30, 60, 180, 365];
+const dateOptions = [6, 14, 21,  60, 180, 365];
 const statusOptions = ["progress", "success", "failed"];
 const typeOptions = ["withdraw", "send", "deposit", "receive"];
 
