@@ -21,3 +21,21 @@
 .select-options{
   transition: 2s;
 }
+
+.chip{
+  border-radius: 100px;
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+}
+
+.close-icon{
+ font-size: 17px;
+ margin-left: 6px;
+}
+
+
+
+.close-icon:hover{
+  cursor: pointer;
+  color: #ccc;
+}

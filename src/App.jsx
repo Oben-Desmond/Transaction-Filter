@@ -2,7 +2,7 @@ import logo from './logo.svg';
 import React, { useState, useEffect } from 'react';
 import './App.css';
 // graphqlclient, gql
-import {GraphQLClient, gql} from 'graphql-request';
+import { GraphQLClient, gql } from 'graphql-request';
 
 const graphcms = new GraphQLClient('https://api-us-west-2.graphcms.com/v2/cl5cv0ond0eo601tbcnyw43ip/master');
 
@@ -28,27 +28,67 @@ function App() {
   const [transactions, setTransactions] = useState([]);
   const [backupTransactions, setBackupTransactions] = useState([]);
 
- 
+  //selected date
+  const [selectedDate, setSelectedDate] = useState();
+  // selected type
+  const [selectedType, setSelectedType] = useState("");
+  // selected status
+  const [selectedStatus, setSelectedStatus] = useState("");
+
+
   useEffect(() => {
-       fetchTransactions();
+    fetchTransactions();
   }, []);
+
+  useEffect(() => {
+    let filteredTransactions = backupTransactions
+    if(selectedDate){
+      // filter transactions by date
+      filteredTransactions = filteredTransactions.filter(transaction => {
+        return convertDays(transaction.date) === convertDays(selectedDate);
+      });
+      setTransactions(filteredTransactions);
+    }
+    if(selectedType){
+      // filter transactions by type
+     filteredTransactions = filteredTransactions.filter(transaction => {
+        return transaction.type === selectedType;
+      }
+      );
+      setTransactions(filteredTransactions);
+    }
+    if(selectedStatus){
+      // filter transactions by status
+      filteredTransactions = filteredTransactions.filter(transaction => {
+        return transaction.transaction_status === selectedStatus;
+      }
+      );
+      setTransactions(filteredTransactions);
+    }
+    // if non element selected, show all transactions
+    if(!selectedDate && !selectedType && !selectedStatus){
+      setTransactions(backupTransactions);
+    }
+
+    
+  }, [selectedDate, selectedType, selectedStatus]);
 
 
   const fetchTransactions = async () => {
 
-  try{
-    const { transactions } = await graphcms.request(QUERY);
-   setTransactions( transactions )
-   setBackupTransactions( transactions )
+    try {
+      const { transactions } = await graphcms.request(QUERY);
+      setTransactions(transactions)
+      setBackupTransactions(transactions)
 
-  }catch(err){
-    console.log(err);
-  }
- 
+    } catch (err) {
+      console.log(err);
+    }
+
   }
 
   function searchTransaction(text) {
-    
+
     if (!text) {
       setTransactions(backupTransactions);
       return;
@@ -78,54 +118,66 @@ function App() {
               <input onChange={(e) => searchTransaction(e.target.value)} type="text" className="form-control" placeholder="Search for..." />
             </div>
             <br />
-            <div className="row container text-center">
-              <div className="col">
-                <div className="dropdown">
-                  <button onClick={() => setshowDate(!showDate)} className="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    {showDate ? "X" : "Date"}
-                  </button>
-                </div>
-                {showDate && <div className='text-start card select-options'>
-                  {
-                    dateOptions.map((day, index) => {
-                      return <div key={index} className="dropdown-item" onClick={() => { }}>{convertDays(day)}</div>
-                    })
-                  }
-                </div>}
+            <div>
+              {selectedDate&&<span className="chip">
+              {convertDays(selectedDate)} <span onClick={() =>setSelectedDate(undefined)} className="close-icon">&times;</span>
+              </span>}
+              {selectedType&&<span className="chip">
+              { selectedType} <span className="close-icon" onClick={() =>setSelectedType("")}>&times;</span>
+              </span>}
+              {selectedStatus&&<span className="chip">
+              { selectedStatus} <span className="close-icon" onClick={() =>setSelectedStatus("")}>&times;</span>
+              </span>}
               </div>
-              <div className="col">
-                <div className="dropdown">
-                  <button onClick={() => setshowType(!showType)} className="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    {showType ? "X" : "Type"}
-                  </button>
+              <br />
+              <div className="row container text-center">
+                <div className="col">
+                  <div className="dropdown">
+                    <button onClick={() => setshowDate(!showDate)} className="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      {showDate ? <span>&times;</span> : "Date"}
+                    </button>
+                  </div>
+                  {showDate && <div className='text-start card select-options'>
+                    {
+                      dateOptions.map((day, index) => {
+                        return <div key={index} className="dropdown-item" onClick={() => { setSelectedDate(day);setshowDate(false)}}>{convertDays(day)}</div>
+                      })
+                    }
+                  </div>}
                 </div>
-                {showType && <div className='text-start card select-options'>
-                  {
-                    typeOptions.map((type, index) => {
-                      return <div key={index} className="dropdown-item" onClick={() => { }}>{type}</div>
-                    })
-                  }
-                </div>}
-              </div>
-              <div className="col">
-                <div className="dropdown">
-                  <button onClick={() => setshowStatus(!showStatus)} className="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    {showStatus ? "X" : "Status"}
-                  </button>
+                <div className="col">
+                  <div className="dropdown">
+                    <button onClick={() => setshowType(!showType)} className="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      {showType ? <span>&times;</span> : "Type"}
+                    </button>
+                  </div>
+                  {showType && <div className='text-start card select-options'>
+                    {
+                      typeOptions.map((type, index) => {
+                        return <div key={index} className="dropdown-item" onClick={() => {setSelectedType(type);setshowType(false)}}>{type}</div>
+                      })
+                    }
+                  </div>}
                 </div>
-                {showStatus && <div className='text-start card select-options'>
-                  {
-                    statusOptions.map((status, index) => {
-                      return <div key={index} className="dropdown-item" onClick={() => { }}>{status}</div>
-                    })
-                  }
-                </div>}
+                <div className="col">
+                  <div className="dropdown">
+                    <button onClick={() => setshowStatus(!showStatus)} className="btn btn-dark dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      {showStatus ? <span>&times;</span> : "Status"}
+                    </button>
+                  </div>
+                  {showStatus && <div className='text-start card select-options'>
+                    {
+                      statusOptions.map((status, index) => {
+                        return <div key={index} className="dropdown-item" onClick={() => {setSelectedStatus(status);setshowStatus(false)}}>{status}</div>
+                      })
+                    }
+                  </div>}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="col"></div>
+            <div className="col"></div>
 
-        </div>
+          </div>
       </header>
 
       <br />
@@ -136,18 +188,18 @@ function App() {
         {transactions.map((transaction, index) => {
 
           const trans_x1 = transaction;
-          let equal=false;
-           if(index>0){
-             const trans_x2=transactions[index-1]
+          let equal = false;
+          if (index > 0) {
+            const trans_x2 = transactions[index - 1]
             // days ago of trans_x1 the same as trans_x2
-            equal = getDaysAgo(trans_x1.date) ==  getDaysAgo(trans_x2.date)
+            equal = getDaysAgo(trans_x1.date) == getDaysAgo(trans_x2.date)
 
           }
 
           return (
             <div key={index}>
-               
-              {(index == 0 || !equal)&& <h6><br /><br />{new Date(transaction.date).toDateString()}</h6>}
+
+              {(index == 0 || !equal) && <h6><br /><br />{new Date(transaction.date).toDateString()}</h6>}
               <div className={'bg-light'} key={index}>
                 <div className="card-body">
                   <div className="row">
