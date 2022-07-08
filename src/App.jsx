@@ -1,16 +1,21 @@
 import logo from './logo.svg';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+// graphqlclient, gql
+import {GraphQLClient, gql} from 'graphql-request';
 
-// transaction array
-// array of objects with the following properties
-// date: date of transaction
-// type: type of transaction 
-// status: status of transaction
-// amount: amount of transaction
-// id
+const graphcms = new GraphQLClient('https://api-us-west-2.graphcms.com/v2/cl5cv0ond0eo601tbcnyw43ip/master');
 
 
+const QUERY = gql`{
+  transactions {
+    date
+    amount
+    transaction_id
+    transaction_status
+    type
+  }
+}`
 
 
 function App() {
@@ -19,46 +24,31 @@ function App() {
   const [showType, setshowType] = useState(false);
   const [showDate, setshowDate] = useState(false);
 
-  const transactionsInfo = [
-    {
-      date: Date.now(),
-      type: 'deposit',
-      status: 'success',
-      amount: '$100.00',
-      id: 1
-    },
-    {
-      date: (1656601127577),
-      type: 'deposit',
-      status: 'success',
-      amount: '$100.00',
-      id: 2
-    },
-    {
-      date: (1655430052261),
-      type: 'receive',
-      status: 'success',
-      amount: '$100.00',
-      id: 3
-    },
-    {
-      date: (1655430052261),
-      type: 'receive',
-      status: 'failed',
-      amount: '$300.00',
-      id: 4
-    }
-  ]
   // transactions
-  const [transactions, setTransactions] = useState(transactionsInfo);
-  const backupTransactions = transactionsInfo
+  const [transactions, setTransactions] = useState([]);
+  const [backupTransactions, setBackupTransactions] = useState([]);
 
+ 
+  useEffect(() => {
+       fetchTransactions();
+  }, []);
+
+
+  const fetchTransactions = async () => {
+
+  try{
+    const { transactions } = await graphcms.request(QUERY);
+   setTransactions( transactions )
+   setBackupTransactions( transactions )
+
+  }catch(err){
+    console.log(err);
+  }
+ 
+  }
 
   function searchTransaction(text) {
-    console.log(text);
-    // filter transactions by text for matching type, status, amount
-    // if text is empty, return all transactions
-    // if text is not empty, return transactions that match text
+    
     if (!text) {
       setTransactions(backupTransactions);
       return;
@@ -66,7 +56,7 @@ function App() {
     else {
       const value = backupTransactions.filter(transaction => {
         return transaction.type.toLowerCase().includes(text.toLowerCase()) ||
-          transaction.status.toLowerCase().includes(text.toLowerCase()) ||
+          transaction.transaction_status.toLowerCase().includes(text.toLowerCase()) ||
           transaction.amount.toLowerCase().includes(text.toLowerCase())
       }
       )
@@ -145,16 +135,26 @@ function App() {
 
         {transactions.map((transaction, index) => {
 
+          const trans_x1 = transaction;
+          let equal=false;
+           if(index>0){
+             const trans_x2=transactions[index-1]
+            // days ago of trans_x1 the same as trans_x2
+            equal = getDaysAgo(trans_x1.date) ==  getDaysAgo(trans_x2.date)
+
+          }
+
           return (
-            <div>
-              {index > 0 && <h6><br /><br />{(new Date(transaction.date)).toDateString().indexOf((new Date(transaction[index - 1]).toDateString())) < 0 && new Date(transaction.date).toDateString()}</h6>}
-              {index == 0 && <h6><br /><br />{new Date(transaction.date).toDateString()}</h6>}
-              <div className={index % 2 == 0 && 'bg-light'} key={index}>
+            <div key={index}>
+               
+              {(index == 0 || !equal)&& <h6><br /><br />{new Date(transaction.date).toDateString()}</h6>}
+              <div className={'bg-light'} key={index}>
                 <div className="card-body">
                   <div className="row">
-                    <div className="col">{transaction.id}</div>
+                    <div className="col">{transaction.transaction_id}</div>
                     <div className="col"> {transaction.type}</div>
-                    <div className="col">{transaction.status}</div>
+                    <div className="col">{transaction.transaction_status}</div>
+                    <div className="col">{transaction.amount}</div>
                     <div className="col"><small>{getTimeAgo(transaction.date)}</small></div>
                   </div>
                 </div>
@@ -222,4 +222,15 @@ function getTimeAgo(time) {
     return months + " months ago";
   }
   return years + " years ago";
+}
+
+
+// number of days from Date.now()
+function getDaysAgo(date) {
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  return days;
 }
